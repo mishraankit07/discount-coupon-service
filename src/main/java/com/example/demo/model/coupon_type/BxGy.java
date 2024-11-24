@@ -1,19 +1,27 @@
-package com.example.demo.coupon_type;
+package com.example.demo.model.coupon_type;
 
 import com.example.demo.model.Cart;
 import com.example.demo.model.Product;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.NoArgsConstructor;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
+@NoArgsConstructor
 public class BxGy implements CouponType {
 
     private Set<Product> buyItems;
     private Set<Product> getItems;
-    private final int buyItemCount;
-    private final int getItemCount;
-    private final int repetitionLimit;
+    private int buyItemCount;
+    private int getItemCount;
+    private int repetitionLimit;
 
-    public BxGy(List<Product> buyItems, List<Product> getItems, int buyItemCount, int getItemCount, int repetitionLimit){
+    public BxGy(@JsonProperty("buyItems") List<Product> buyItems,
+                @JsonProperty("getItems") List<Product> getItems,
+                @JsonProperty("buyItemCount") int buyItemCount,
+                @JsonProperty("getItemCount") int getItemCount,
+                @JsonProperty("repetitionLimit") int repetitionLimit){
         this.buyItems = new HashSet<>();
         this.buyItems.addAll(buyItems);
 
@@ -26,6 +34,11 @@ public class BxGy implements CouponType {
     }
 
     @Override
+    public String getName() {
+        return "bxgy";
+    }
+
+    @Override
     public boolean isApplicable(Cart cart) {
 
         int buyItemsInCart = 0;
@@ -33,11 +46,11 @@ public class BxGy implements CouponType {
 
         for(Product product: cart.products()){
             if(buyItems.contains(product)){
-                buyItemsInCart = buyItemsInCart + product.units();
+                buyItemsInCart = buyItemsInCart + product.getUnits();
             }
 
             else if(getItems.contains(product)){
-                getItemsInCart = getItemsInCart + product.units();
+                getItemsInCart = getItemsInCart + product.getUnits();
             }
         }
 
@@ -61,12 +74,12 @@ public class BxGy implements CouponType {
 
             for(Product product: cart.products()){
                 if(buyItems.contains(product)){
-                    buyItemsInCart = buyItemsInCart + product.units();
+                    buyItemsInCart = buyItemsInCart + product.getUnits();
                 }
 
                 else if(getItems.contains(product)){
                     productsToGiveForFree.add(product);
-                    getItemsInCart = getItemsInCart + product.units();
+                    getItemsInCart = getItemsInCart + product.getUnits();
                 }
             }
 
@@ -76,13 +89,18 @@ public class BxGy implements CouponType {
 
             int idx = 0;
             while(numberOfItemsToGiveForFree > 0 && idx < productsToGiveForFree.size()){
-                if(numberOfItemsToGiveForFree >= productsToGiveForFree.get(idx).units()){
-                    discountAmount = discountAmount + productsToGiveForFree.get(idx).units() * productsToGiveForFree.get(idx).perUnitPrice();
-                    numberOfItemsToGiveForFree -= productsToGiveForFree.get(idx).units();
+
+                Product product = productsToGiveForFree.get(idx);
+
+                if(numberOfItemsToGiveForFree >= product.getUnits()){
+                    product.setDiscount(product.getUnits() * product.getPerUnitPrice());
+                    discountAmount = discountAmount + product.getUnits() * product.getPerUnitPrice();
+                    numberOfItemsToGiveForFree -= product.getUnits();
                 }
 
                 else{
-                    discountAmount = discountAmount + numberOfItemsToGiveForFree * productsToGiveForFree.get(idx).perUnitPrice();
+                    product.setDiscount(numberOfItemsToGiveForFree * product.getPerUnitPrice());
+                    discountAmount = discountAmount + numberOfItemsToGiveForFree * product.getPerUnitPrice();
                     numberOfItemsToGiveForFree = 0;
                 }
 
@@ -96,8 +114,8 @@ public class BxGy implements CouponType {
 
     @Override
     public String discountDetails() {
-        return "On purchase of " + buyItemCount + "from " + buyItems.stream().map(Product::name).collect(Collectors.joining(","))
-                + " you get " + getItemCount + " free from "
-                + getItems.stream().map(Product::name).collect(Collectors.joining(","));
+        return "On purchase of " + buyItemCount + " items from " + buyItems.stream().map(Product::getName).collect(Collectors.joining(","))
+                + " you get " + getItemCount + " items free from "
+                + getItems.stream().map(Product::getName).collect(Collectors.joining(","));
     }
 }

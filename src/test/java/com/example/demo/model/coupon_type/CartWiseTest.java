@@ -1,4 +1,4 @@
-package com.example.demo.coupon_type;
+package com.example.demo.model.coupon_type;
 
 import com.example.demo.model.Cart;
 import com.example.demo.model.Product;
@@ -59,7 +59,6 @@ public class CartWiseTest {
         productList.add(product1);
         productList.add(product2);
         Cart cart = new Cart(productList);
-
         assertEquals(cartWise.apply(cart), 22.0);
     }
 

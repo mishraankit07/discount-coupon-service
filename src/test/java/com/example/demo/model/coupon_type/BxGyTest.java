@@ -1,4 +1,4 @@
-package com.example.demo.coupon_type;
+package com.example.demo.model.coupon_type;
 
 import com.example.demo.model.Cart;
 import com.example.demo.model.Product;
@@ -111,5 +111,29 @@ public class BxGyTest {
         Cart cart = new Cart(cartProducts);
         assertTrue(bxGy.isApplicable(cart));
         assertEquals(bxGy.apply(cart), 10);
+    }
+
+    @Test
+    @DisplayName("discountDetails should return the correct discount discription")
+    public void testGetDiscountDetails(){
+
+        List<Product> buyItems = new ArrayList<>();
+        buyItems.add(new Product("id1", "X", 3, 10.0));
+        buyItems.add(new Product("id2", "Y", 3, 20.0));
+        buyItems.add(new Product("id3", "Z", 3, 30.0));
+
+        List<Product> getItems = new ArrayList<>();
+        getItems.add(new Product("id4", "A", 3, 10.0));
+        getItems.add(new Product("id5", "B", 3, 20.0));
+        getItems.add(new Product("id6", "C", 3, 30.0));
+
+        CouponType bxGy = new BxGy(buyItems, getItems, 2, 1, 3);
+
+        List<Product> cartProducts = new ArrayList<>();
+        cartProducts.add(new Product("id1", "X", 3, 10.0));
+        cartProducts.add(new Product("id3", "Z", 3, 30.0));
+        cartProducts.add(new Product("id4", "A", 1, 10.0));
+
+        assertEquals(bxGy.discountDetails(), "On purchase of 2 items from X,Y,Z you get 1 items free from C,A,B");
     }
 }

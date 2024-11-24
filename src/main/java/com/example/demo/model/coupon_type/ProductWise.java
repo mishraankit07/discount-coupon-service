@@ -1,4 +1,4 @@
-package com.example.demo.coupon_type;
+package com.example.demo.model.coupon_type;
 
 import com.example.demo.model.Cart;
 import com.example.demo.model.Product;
@@ -22,6 +22,15 @@ public class ProductWise implements CouponType {
         productWisePercentageDiscount.remove(product);
     }
 
+    private double calculateProductDiscount(Product product){
+        return ((1.0*productWisePercentageDiscount.getOrDefault(product, 0))/100)*product.getPerUnitPrice()*product.getUnits();
+    }
+
+    @Override
+    public String getName() {
+        return "product-wise";
+    }
+
     @Override
     public boolean isApplicable(Cart cart) {
         for(Product product: cart.products()){
@@ -36,27 +45,21 @@ public class ProductWise implements CouponType {
     @Override
     public double apply(Cart cart) {
 
-        double totalAmount = 0;
+        double totalDiscount = 0.0;
 
         for(Product product: cart.products()){
-            if(productWisePercentageDiscount.containsKey(product)){
-                int discountPercentage = productWisePercentageDiscount.get(product);
-                double actualCost = product.units() * product.perUnitPrice();
-                totalAmount += (1 - (1.0 * discountPercentage)/100)*actualCost;
-            }
-
-            else{
-                totalAmount += product.units() * product.perUnitPrice();
-            }
+           double productDiscount = calculateProductDiscount(product);
+           product.setDiscount(productDiscount);
+           totalDiscount += productDiscount;
         }
 
-        return (cart.getTotal() - totalAmount);
+        return totalDiscount;
     }
 
     @Override
     public String discountDetails() {
         return "Get guaranteed discount by adding:"
-                + productWisePercentageDiscount.keySet().stream().map((Product::name)).collect(Collectors.joining(","))
+                + productWisePercentageDiscount.keySet().stream().map((Product::getName)).collect(Collectors.joining(","))
                 + " to your cart";
     }
 }

@@ -9,7 +9,7 @@ public record Cart(List<Product> products) {
         double cartAmount = 0.0;
 
         for(Product product: products){
-            cartAmount += product.units() * product.perUnitPrice();
+            cartAmount += product.getUnits() * product.getPerUnitPrice();
         }
 
         return cartAmount;
