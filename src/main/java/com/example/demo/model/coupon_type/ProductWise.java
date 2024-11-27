@@ -62,4 +62,11 @@ public class ProductWise implements CouponType {
                 + productWisePercentageDiscount.keySet().stream().map((Product::getName)).collect(Collectors.joining(","))
                 + " to your cart";
     }
+
+    @Override
+    public String toString() {
+        return "ProductWise{" +
+                "productWisePercentageDiscount=" + productWisePercentageDiscount +
+                '}';
+    }
 }

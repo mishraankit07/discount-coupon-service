@@ -84,7 +84,7 @@ public class BxGyTest {
 
         Cart cart = new Cart(cartProducts);
 
-        assertEquals(bxGy.apply(cart), 30);
+        assertEquals(30, bxGy.apply(cart));
     }
 
     @Test
@@ -110,7 +110,7 @@ public class BxGyTest {
 
         Cart cart = new Cart(cartProducts);
         assertTrue(bxGy.isApplicable(cart));
-        assertEquals(bxGy.apply(cart), 10);
+        assertEquals(10, bxGy.apply(cart));
     }
 
     @Test
@@ -134,6 +134,6 @@ public class BxGyTest {
         cartProducts.add(new Product("id3", "Z", 3, 30.0));
         cartProducts.add(new Product("id4", "A", 1, 10.0));
 
-        assertEquals(bxGy.discountDetails(), "On purchase of 2 items from X,Y,Z you get 1 items free from C,A,B");
+        assertEquals("On purchase of 2 items from X,Y,Z you get 1 items free from C,A,B", bxGy.discountDetails());
     }
 }

@@ -59,7 +59,7 @@ public class CartWiseTest {
         productList.add(product1);
         productList.add(product2);
         Cart cart = new Cart(productList);
-        assertEquals(cartWise.apply(cart), 22.0);
+        assertEquals(22.0, cartWise.apply(cart));
     }
 
     @Test
@@ -74,6 +74,6 @@ public class CartWiseTest {
         productList.add(product2);
         Cart cart = new Cart(productList);
 
-        assertEquals(cartWise.discountDetails(), "Get discount of 10 for purchase greater than 200.0");
+        assertEquals("Get discount of 10 for purchase greater than 200.0", cartWise.discountDetails());
     }
 }

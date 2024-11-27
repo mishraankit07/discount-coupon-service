@@ -5,6 +5,9 @@ import com.example.demo.model.coupon_type.BxGy;
 import com.example.demo.model.coupon_type.CartWise;
 import com.example.demo.model.coupon_type.CouponType;
 import com.example.demo.model.coupon_type.ProductWise;
+import com.example.demo.repository.CouponRepository;
+import com.example.demo.repository.RedisCouponRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,14 +17,19 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 public class CouponManagerServiceTest {
 
     private static CouponManagerService couponManagerService;
+    private static CouponRepository couponRepository;
+    private static ObjectMapper objectMapper;
 
     @BeforeAll
     static void setup(){
-        couponManagerService = new CouponManagerService();
+        objectMapper = mock(ObjectMapper.class);
+        couponRepository = mock(RedisCouponRepository.class);
+        couponManagerService = new CouponManagerService(couponRepository, objectMapper);
     }
 
     @BeforeEach
@@ -35,7 +43,7 @@ public class CouponManagerServiceTest {
         CouponType couponType = new CartWise(200, 10);
         Coupon coupon = new Coupon("123", couponType);
         couponManagerService.createCoupon(coupon);
-        assertEquals(couponManagerService.getAllCoupons().size(), 1);
+        assertEquals(1, couponManagerService.getAllCoupons().size());
     }
 
     @Test
@@ -77,7 +85,7 @@ public class CouponManagerServiceTest {
         couponManagerService.createCoupon(coupon2);
 
         assertTrue(couponManagerService.deleteCouponById("123"));
-        assertEquals(couponManagerService.getAllCoupons().size(), 1);
+        assertEquals(1, couponManagerService.getAllCoupons().size());
 
         assertFalse(couponManagerService.deleteCouponById("111"));
     }
@@ -108,8 +116,8 @@ public class CouponManagerServiceTest {
         CouponOnCartResponse bxGyCouponAfterDiscountResponse = response.stream().filter(couponOnCartResponse -> couponOnCartResponse.couponId().equals("3")).findFirst().get();
         Optional<CouponOnCartResponse> productWiseCouponAfterDiscountResponse = response.stream().filter(couponOnCartResponse -> couponOnCartResponse.couponId().equals("2")).findFirst();
 
-        assertEquals(cartWiseCouponAfterDiscountResponse.discountAmount(), 38.0);
-        assertEquals(bxGyCouponAfterDiscountResponse.discountAmount(), 50.0);
+        assertEquals(38.0, cartWiseCouponAfterDiscountResponse.discountAmount());
+        assertEquals(50.0, bxGyCouponAfterDiscountResponse.discountAmount());
         assertTrue(productWiseCouponAfterDiscountResponse.isEmpty());
     }
 
@@ -141,9 +149,9 @@ public class CouponManagerServiceTest {
         Product buyProduct2 = updatedCartResponse.items().stream().filter(product -> product.getId().contentEquals("2")).findFirst().get();
         Product getProduct1 = updatedCartResponse.items().stream().filter(product -> product.getId().contentEquals("3")).findFirst().get();
 
-        assertEquals(buyProduct1.getDiscount(), 0.0);
-        assertEquals(buyProduct2.getDiscount(), 0.0);
-        assertEquals(getProduct1.getDiscount(), 50.0);
-        assertEquals(updatedCartResponse.totalDiscount(), 50.0);
+        assertEquals(0.0, buyProduct1.getDiscount());
+        assertEquals(0.0, buyProduct2.getDiscount());
+        assertEquals(50.0, getProduct1.getDiscount());
+        assertEquals(50.0, updatedCartResponse.totalDiscount());
     }
 }

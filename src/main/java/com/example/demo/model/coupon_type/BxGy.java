@@ -118,4 +118,15 @@ public class BxGy implements CouponType {
                 + " you get " + getItemCount + " items free from "
                 + getItems.stream().map(Product::getName).collect(Collectors.joining(","));
     }
+
+    @Override
+    public String toString() {
+        return "BxGy{" +
+                "buyItems=" + buyItems +
+                ", getItems=" + getItems +
+                ", buyItemCount=" + buyItemCount +
+                ", getItemCount=" + getItemCount +
+                ", repetitionLimit=" + repetitionLimit +
+                '}';
+    }
 }

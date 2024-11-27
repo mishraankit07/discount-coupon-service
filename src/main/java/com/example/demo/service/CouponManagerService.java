@@ -1,53 +1,80 @@
 package com.example.demo.service;
 
-import com.example.demo.model.*;
+import com.example.demo.model.Cart;
+import com.example.demo.model.Coupon;
+import com.example.demo.model.CouponOnCartResponse;
+import com.example.demo.model.UpdatedCartResponse;
+import com.example.demo.repository.CouponRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
-import java.util.OptionalInt;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+
+import static com.example.demo.utils.RedisUtils.generateKey;
 
 @Service
+@EnableScheduling
+@EnableAsync
 public class CouponManagerService {
 
-    private List<Coupon> couponList;
+    // id -> coupon map
+    private ConcurrentHashMap<String, Coupon> coupons;
+    private CouponRepository couponRepository;
+    private ObjectMapper objectMapper;
 
-    public CouponManagerService() {
-        couponList = new ArrayList<>();
+    private Logger logger = LoggerFactory.getLogger("CouponManagementService");
+
+    public CouponManagerService(CouponRepository couponRepository, ObjectMapper objectMapper) {
+        coupons = new ConcurrentHashMap<>();
+        this.couponRepository = couponRepository;
+        this.objectMapper = objectMapper;
     }
 
     public void clearCoupons(){
-        couponList.clear();
+        coupons.clear();
     }
 
     public void createCoupon(Coupon newCoupon){
-        couponList.add(newCoupon);
+        coupons.put(newCoupon.getId(), newCoupon);
+
+        try {
+            couponRepository.set(generateKey(newCoupon.getId()), objectMapper.writeValueAsString(newCoupon));
+        }catch (Exception e){
+            logger.error("failed to write coupon with id:" + newCoupon.getId() + " to redis");
+        }
     }
 
     public List<Coupon> getAllCoupons(){
-        return couponList;
+        return coupons.values().stream().toList();
     }
 
     public Optional<Coupon> getCouponById(String id){
-        return couponList.stream()
-                          .filter((coupon -> coupon.getId().contentEquals(id))).findFirst();
+        return Optional.ofNullable(coupons.get(id));
     }
 
     public boolean updateCouponById(String id, Coupon updatedCoupon){
 
-        OptionalInt indexOpt = IntStream.range(0, couponList.size())
-                .filter(i -> couponList.get(i).getId().contentEquals(id)).findFirst();
+        Optional<Coupon> maybeCoupon = Optional.ofNullable(coupons.get(id));
 
-        if(indexOpt.isEmpty()){
+        if(maybeCoupon.isEmpty()){
             return false;
         }
 
-        couponList.set(indexOpt.getAsInt(), updatedCoupon);
-        return true;
+        coupons.put(updatedCoupon.getId(), updatedCoupon);
+        try {
+            couponRepository.set(generateKey(updatedCoupon.getId()), objectMapper.writeValueAsString(updatedCoupon));
+        }catch (Exception e){
+            logger.error("failed to update coupon with id:" + id + " to redis");
+        }
+        return true; // set only returns true if coupon is not present in it
     }
 
     public boolean deleteCouponById(String id){
@@ -57,12 +84,13 @@ public class CouponManagerService {
             return false;
         }
 
-        couponList.remove(maybeCoupon.get());
+        coupons.remove(id);
+        couponRepository.delete(generateKey(id));
         return true;
     }
 
     public List<CouponOnCartResponse> getAllApplicableCouponsResponse(Cart cart){
-        return couponList.stream().filter(coupon -> coupon.isApplicable(cart))
+        return coupons.values().stream().filter(coupon -> coupon.isApplicable(cart))
                                   .map(coupon -> new CouponOnCartResponse(coupon.getId(), coupon.getCouponType(), coupon.getDiscount(cart))).collect(Collectors.toList());
 
     }
@@ -80,5 +108,14 @@ public class CouponManagerService {
         }
 
         return Optional.empty();
+    }
+
+    @PostConstruct
+    public void loadAllCoupons(){
+        List<Coupon> loadedCoupons = couponRepository.getAllCoupons();
+        coupons = loadedCoupons
+                .stream().collect(Collectors.toMap(Coupon::getId, coupon -> coupon, (v1, v2) -> v1, ConcurrentHashMap::new));
+
+        logger.info("loaded:" + coupons.size() + " coupons from redis on startup");
     }
 }

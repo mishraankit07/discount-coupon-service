@@ -53,4 +53,12 @@ public class CartWise implements CouponType {
     public String discountDetails() {
         return "Get discount of " + percentageDiscount + " for purchase greater than " + amount;
     }
+
+    @Override
+    public String toString() {
+        return "CartWise{" +
+                "percentageDiscount=" + percentageDiscount +
+                ", amount=" + amount +
+                '}';
+    }
 }

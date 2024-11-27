@@ -41,6 +41,6 @@ public class ProductWiseTest {
         productWise.addProductDiscount(p1, 10);
         Cart cart = new Cart(List.of(p1, p2));
 
-        assertEquals(productWise.apply(cart), 20.0);
+        assertEquals(20.0, productWise.apply(cart));
     }
 }
